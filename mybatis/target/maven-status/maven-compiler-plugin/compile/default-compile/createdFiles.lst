@@ -1,0 +1,4 @@
+com\candy\mapper\EmployeeMapper.class
+com\candy\bean\Department.class
+com\candy\mapper\DepartmentMapper.class
+com\candy\bean\Employee.class

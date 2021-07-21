@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.candy.mapper.EmployeeMapper">
+    <cache type="org.mybatis.caches.ehcache.EhcacheCache"></cache>
+    
+    <resultMap id="EmployeeAndDepartment" type="com.candy.bean.Employee">
+        <id column="employee_id" property="employeeId"></id>
+        <result column="last_name" property="lastName"></result>
+        <result column="email" property="email"></result>
+        <result column="gender" property="gender"></result>
+        <result column="age" property="age"></result>
+        <result column="department_id" property="department.departmentId"></result>
+        <result column="department_name" property="department.departmentName"></result>
+    </resultMap>
+
+    <resultMap id="EmployeeAndDepartmentTwo" type="com.candy.bean.Employee">
+        <id column="employee_id" property="employeeId"></id>
+        <result column="last_name" property="lastName"></result>
+        <result column="email" property="email"></result>
+        <result column="gender" property="gender"></result>
+        <result column="age" property="age"></result>
+
+        <!--使用association指定内联的Bean对象 -->
+        <association property="department" javaType="com.candy.bean.Department">
+            <id column="department_id" property="departmentId"></id>
+            <id column="department_name" property="departmentName"></id>
+        </association>
+    </resultMap>
+
+    <resultMap id="EmployeeAndDepartmentThree" type="com.candy.bean.Employee">
+        <id column="employee_id" property="employeeId"></id>
+        <result column="last_name" property="lastName"></result>
+        <result column="email" property="email"></result>
+        <result column="gender" property="gender"></result>
+        <result column="age" property="age"></result>
+
+        <!--使用association指定调用另一个Mapper中的方法封装对象 -->
+        <association property="department"
+                     select="com.candy.mapper.DepartmentMapper.getDepartmentById"
+                     column="department_id">
+        </association>
+    </resultMap>
+
+    <resultMap id="EmployeeAndDepartmentFour" type="com.candy.bean.Employee">
+        <id column="employee_id" property="employeeId"></id>
+        <result column="last_name" property="lastName"></result>
+        <result column="email" property="email"></result>
+        <result column="gender" property="gender"></result>
+        <result column="age" property="age"></result>
+        <discriminator javaType="int" column="age">
+            <case value="30" resultType="com.candy.bean.Employee">
+                <!--使用association指定调用另一个Mapper中的方法封装对象 -->
+                <association property="department"
+                             select="com.candy.mapper.DepartmentMapper.getDepartmentById"
+                             column="department_id">
+                </association>
+            </case>
+        </discriminator>
+    </resultMap>
+
+    <select id="getEmployeeAndDepartmentById" parameterType="int" resultMap="EmployeeAndDepartmentFour">
+      SELECT * FROM `employee` WHERE employee_id=#{employeeId}
+    </select>
+
+    <select id="getEmployeeAndDepartment" resultMap="EmployeeAndDepartmentTwo">
+        SELECT * FROM `employee` e
+          INNER JOIN `department` d ON e.`department_id`=d.`department_id`
+          where employee_id=#{employeeId}
+    </select>
+
+    <select id="getEmployeeAndDepartmentTwo" resultMap="EmployeeAndDepartmentThree" useCache="true">
+        SELECT * FROM `employee` e
+          INNER JOIN `department` d ON e.`department_id`=d.`department_id`
+    </select>
+
+    <select id="getEmployeeMaps" resultType="java.util.Map">
+       SELECT * FROM `employee`
+    </select>
+
+    <select id="selectEmployee" resultType="com.candy.bean.Employee">
+        SELECT * FROM `employee` WHERE employee_id=#{employeeId} and last_name=#{lastName}
+    </select>
+
+    <select id="selectOne" parameterType="int" resultType="com.candy.bean.Employee">
+      SELECT * FROM `employee` WHERE employee_id=#{employeeId}
+    </select>
+
+    <insert id="insertEmployee" parameterType="com.candy.bean.Employee" useGeneratedKeys="true" keyProperty="employeeId">
+        insert into employee (`last_name`,`email`,`gender`,`age`,`create_time`)
+        values (#{lastName},#{email},#{gender},#{age},#{createTime});
+    </insert>
+
+    <update id="updateEmployee" parameterType="com.candy.bean.Employee" flushCache="true">
+        update employee set last_name=#{lastName},email=#{email}
+        ,gender=#{gender},age=#{age},update_time=#{updateTime} where employee_id=#{employeeId}
+    </update>
+
+    <delete id="deleteEmployee" parameterType="int">
+        delete from employee where employee_id=#{employeeId}
+    </delete>
+
+    <select id="getDepartmentIds" resultType="com.candy.bean.Employee">
+        SELECT * FROM `employee` where department_id=#{departmentId}
+    </select>
+
+    <select id="selectEmployeeList" resultType="com.candy.bean.Employee">
+        SELECT * FROM `employee`
+        <where>
+            <!--
+                如果带了employeeId，就使用employeeId查询；如果带了lastName，就是要lastName查询；
+                只会进入一个when，拼接一个条件;
+                when相当于if，otherwise相当于else
+            -->
+            <choose>
+                <when test="employeeId != null">
+                    employee_id=#{employeeId}
+                </when>
+                <when test="lastName != null and lastName != ''">
+                    last_name=#{lastName}
+                </when>
+                <otherwise>
+                    gender=1
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+    
+    <select id="getForeach" resultType="com.candy.bean.Employee">
+        SELECT * FROM `employee` WHERE employee_id IN
+        <!--
+            collection：指定要遍历的集合，list类型的参数会特殊处理，封装到map中，默认的key就是：list
+            item：将当前遍历出的元素赋值给指定的变量，之后使用#{变量名}取出值
+            separator：每个元素之间的分隔符
+            open：遍历出所有结果后，拼接的前缀
+            close：拼接的后缀
+            index：遍历list的时候就是索引；
+                   遍历map的时候，就是key，item是值value
+         -->
+        <foreach collection="employeeIds" item="employeeId" separator="," open="(" close=")" index="index">
+          #{employeeId}
+        </foreach>
+    </select>
+
+    <insert id="addEmployeeList" parameterType="com.candy.bean.Employee">
+        INSERT INTO `employee`(last_name,email,gender,age,create_time,department_id)
+        VALUES
+        <foreach collection="employeeList" item="employee" separator=",">
+            (#{employee.lastName},#{employee.email},#{employee.gender}
+            ,#{employee.age},#{employee.createTime},#{employee.departmentId})
+        </foreach>
+    </insert>
+
+
+    <select id="selectBind" resultType="com.candy.bean.Employee">
+        <bind name="_lastName" value="'%'+lastName+'%'"></bind>
+        SELECT * FROM `employee`
+        <if test="_parameter != null and _parameter != ''">
+            WHERE last_name LIKE #{_lastName}
+        </if>
+    </select>
+
+</mapper>

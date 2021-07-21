@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <properties resource="config/jdbc.properties"></properties>
+    <settings>
+        <!-- 驼峰命名规则 -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!-- 解决Oracle数据库中插入null值报错的问题 -->
+        <setting name="jdbcTypeForNull" value="NULL"/>
+
+        <!-- 开启懒加载，按需加载(有个坑，打断点也算按需加载了) -->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <setting name="aggressiveLazyLoading" value="false"/>
+        <!-- 设置开启二级缓存 -->
+        <setting name="cacheEnabled" value="true"></setting>
+        <setting name="localCacheScope" value="STATEMENT"></setting>
+    </settings>
+    <typeAliases>
+        <package name="com.candy.bean"/>
+    </typeAliases>
+    <plugins>
+        <plugin interceptor="com.candy.plugin.MyPlugin">
+            <property name="username" value="root"></property>
+        </plugin>
+    </plugins>
+    <!-- 可以配置多环境，例如开发环境，测试环境，生成环境
+         default用来指定使用那个环境，
+         id是每个环境的唯一标识
+    -->
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="${pool.driverClassName}"/>
+                <property name="url" value="${pool.url}"/>
+                <property name="username" value="${pool.username}"/>
+                <property name="password" value="${pool.password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <mappers>
+        <mapper resource="xml/EmployeeMapper.xml"></mapper>
+        <mapper resource="xml/DepartmentMapper.xml"></mapper>
+    </mappers>
+</configuration>
