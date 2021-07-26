@@ -142,7 +142,7 @@ Preparing: select * from tbl_employee where id=2 and last_name=?
 			<setting name="jdbcTypeForNull" value="NULL"/>
 			
 		
-			2021-07-21	hot-fix
+			2021-07-21	hot-fix test
 		
 
 	
